@@ -28,7 +28,10 @@ namespace Mp3_Player_with_BASS
             set { paused = value; }
             get { return paused; }
         }
-
+        public int Stream
+        {
+            get { return stream; }
+        }
 
         #endregion
         #region methods

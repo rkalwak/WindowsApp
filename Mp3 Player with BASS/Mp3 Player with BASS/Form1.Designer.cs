@@ -56,6 +56,8 @@
             this.button12 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.pictureBoxSpectrum = new System.Windows.Forms.PictureBox();
+            this.timerSpectrum = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
@@ -63,6 +65,7 @@
             this.groupBox1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.groupBox2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSpectrum)).BeginInit();
             this.SuspendLayout();
             // 
             // btnOpenFile
@@ -331,11 +334,26 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "groupBox2";
             // 
+            // pictureBoxSpectrum
+            // 
+            this.pictureBoxSpectrum.BackColor = System.Drawing.Color.White;
+            this.pictureBoxSpectrum.Location = new System.Drawing.Point(141, 12);
+            this.pictureBoxSpectrum.Name = "pictureBoxSpectrum";
+            this.pictureBoxSpectrum.Size = new System.Drawing.Size(387, 82);
+            this.pictureBoxSpectrum.TabIndex = 22;
+            this.pictureBoxSpectrum.TabStop = false;
+            this.pictureBoxSpectrum.MouseDown += new System.Windows.Forms.MouseEventHandler(this.pictureBoxSpectrum_MouseDown);
+            // 
+            // timerSpectrum
+            // 
+            this.timerSpectrum.Tick += new System.EventHandler(this.timerSpectrum_Tick);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(756, 647);
+            this.Controls.Add(this.pictureBoxSpectrum);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.button1);
@@ -365,6 +383,7 @@
             this.groupBox1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSpectrum)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -399,6 +418,8 @@
         private System.Windows.Forms.ToolStripMenuItem fetchFromServerToolStripMenuItem;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.PictureBox pictureBoxSpectrum;
+        private System.Windows.Forms.Timer timerSpectrum;
 
 
     }

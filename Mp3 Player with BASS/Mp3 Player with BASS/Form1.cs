@@ -14,18 +14,22 @@ using System.Data.SqlClient;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Un4seen.Bass.Misc;
 namespace Mp3_Player_with_BASS
 {
     public partial class Form1 : Form
     {
-        Player player;
-        int playState, songLenght,selectedSong,songNumber;
-        bool looping, shuffling;
+        private Player player;
+        private int playState, songLenght,selectedSong,songNumber;
+        private bool looping, shuffling;
      
         SqlConnection sqlConn;
-        DataSet ds=new DataSet();
-        string request = "";
-        DatabaseManager db;
+        private DataSet ds=new DataSet();
+        private string request = "";
+        private DatabaseManager db;
+        private Visuals _vis = new Visuals();
+        private int specIdx = 15;
+        private int voicePrintIdx = 0;
 
         [DllImport ("winmm.dll")]
         public static extern int waveOutGetVolume(IntPtr hwo, out uint dwVolume);
@@ -53,7 +57,108 @@ namespace Mp3_Player_with_BASS
             ushort CalcVol = (ushort)(CurrVol & 0x0000ffff);
             // Get the volume on a scale of 1 to 100 (to fit the trackbar)
             trackBar2.Value = CalcVol / (ushort.MaxValue / 100);
-            
+            timerSpectrum.Enabled = true;
+            timerSpectrum.Interval = 50;
+        }
+
+        private void DrawSpectrum()
+        {
+            switch (specIdx)
+            {
+                // normal spectrum (width = resolution)
+                case 0:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrum(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.Lime, Color.Red, Color.Black, false, false, false);
+                    break;
+                // normal spectrum (full resolution)
+                case 1:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrum(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.SteelBlue, Color.Pink, Color.Black, false, true, true);
+                    break;
+                // line spectrum (width = resolution)
+                case 2:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumLine(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.Lime, Color.Red, Color.Black, 2, 2, false, false, false);
+                    break;
+                // line spectrum (full resolution)
+                case 3:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumLine(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.SteelBlue, Color.Pink, Color.Black, 16, 4, false, true, true);
+                    break;
+                // ellipse spectrum (width = resolution)
+                case 4:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumEllipse(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.Lime, Color.Red, Color.Black, 1, 2, false, false, false);
+                    break;
+                // ellipse spectrum (full resolution)
+                case 5:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumEllipse(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.SteelBlue, Color.Pink, Color.Black, 2, 4, false, true, true);
+                    break;
+                // dot spectrum (width = resolution)
+                case 6:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumDot(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.Lime, Color.Red, Color.Black, 1, 0, false, false, false);
+                    break;
+                // dot spectrum (full resolution)
+                case 7:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumDot(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.SteelBlue, Color.Pink, Color.Black, 2, 1, false, false, true);
+                    break;
+                // peak spectrum (width = resolution)
+                case 8:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumLinePeak(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.SeaGreen, Color.LightGreen, Color.Orange, Color.Black, 2, 1, 2, 10, false, false, false);
+                    break;
+                // peak spectrum (full resolution)
+                case 9:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumLinePeak(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.GreenYellow, Color.RoyalBlue, Color.DarkOrange, Color.Black, 23, 5, 3, 5, false, true, true);
+                    break;
+                // wave spectrum (width = resolution)
+                case 10:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumWave(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.Yellow, Color.Orange, Color.Black, 1, false, false, false);
+                    break;
+                // dancing beans spectrum (width = resolution)
+                case 11:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumBean(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.Chocolate, Color.DarkGoldenrod, Color.Black, 4, false, false, true);
+                    break;
+                // dancing text spectrum (width = resolution)
+                case 12:
+                    this.pictureBoxSpectrum.Image = _vis.CreateSpectrumText(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.White, Color.Tomato, Color.Black, "BASS .NET IS GREAT PIECE! UN4SEEN ROCKS...", false, false, true);
+                    break;
+                // frequency detection
+                case 13:
+                    float amp = _vis.DetectFrequency(player.Stream, 10, 500, true);
+                    if (amp > 0.3)
+                        this.pictureBoxSpectrum.BackColor = Color.Red;
+                    else
+                        this.pictureBoxSpectrum.BackColor = Color.Black;
+                    break;
+                // 3D voice print
+                case 14:
+                    // we need to draw directly directly on the picture box...
+                    // normally you would encapsulate this in your own custom control
+                    Graphics g = Graphics.FromHwnd(this.pictureBoxSpectrum.Handle);
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    _vis.CreateSpectrum3DVoicePrint(player.Stream, g, new Rectangle(0, 0, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height), Color.Black, Color.White, voicePrintIdx, false, false);
+                    g.Dispose();
+                    // next call will be at the next pos
+                    voicePrintIdx++;
+                    if (voicePrintIdx > this.pictureBoxSpectrum.Width - 1)
+                        voicePrintIdx = 0;
+                    break;
+                // WaveForm
+                case 15:
+                    this.pictureBoxSpectrum.Image = _vis.CreateWaveForm(player.Stream, this.pictureBoxSpectrum.Width, this.pictureBoxSpectrum.Height, Color.Green, Color.Red, Color.Gray, Color.Black, 1, true, false, true);
+                    break;
+            }
+        }
+
+        private void pictureBoxSpectrum_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+                specIdx++;
+            else
+                specIdx--;
+
+            if (specIdx > 15)
+                specIdx = 0;
+            if (specIdx < 0)
+                specIdx = 15;
+
+            this.pictureBoxSpectrum.Image = null;
+            _vis.ClearPeaks();
         }
 
         private void dataGridView1_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
@@ -188,6 +293,7 @@ namespace Mp3_Player_with_BASS
                 player.PlaySong();
                 player.Playing = true;
                 timer1.Enabled = true;
+                timerSpectrum.Enabled = true;
 
 
                 selectedSong = i;
@@ -202,6 +308,7 @@ namespace Mp3_Player_with_BASS
                 trackBar1.Value = 0;
                 trackBar1.Maximum = int.Parse(dataGridView1.Rows[selectedSong+1].Cells["Duration"].Value.ToString());
                 timer1.Enabled=true;
+                timerSpectrum.Enabled = true;
                 player.PlaySong();
               
                 player.Playing = true;
@@ -219,6 +326,7 @@ namespace Mp3_Player_with_BASS
                 trackBar1.Maximum = int.Parse(dataGridView1.Rows[selectedSong-1].Cells["Duration"].Value.ToString());
                 player.PlaySong();
                 timer1.Enabled=true;
+                timerSpectrum.Enabled = true;
                 dataGridView1.Rows[selectedSong].Selected = false;
                 selectedSong--;
                 dataGridView1.Rows[selectedSong].Selected = true;
@@ -403,7 +511,10 @@ namespace Mp3_Player_with_BASS
                 }
 
                 timer1.Enabled = true;
+                timerSpectrum.Enabled = true;
+                
             }
+            timerSpectrum.Start();
         }
 
         private void btnPause_Click(object sender, EventArgs e)
@@ -414,6 +525,7 @@ namespace Mp3_Player_with_BASS
                 player.Playing = true;
                 player.Paused = false;
                 timer1.Enabled = true;
+                timerSpectrum.Enabled = true;
             }
             else
             {
@@ -421,6 +533,7 @@ namespace Mp3_Player_with_BASS
                 playState = player.CurrentPossition();
                 player.Paused = true;
                 timer1.Enabled = false;
+                timerSpectrum.Enabled = false;
             }
         }
 
@@ -429,6 +542,8 @@ namespace Mp3_Player_with_BASS
             player.StopSong();
             timer1.Enabled = false;
             timer1.Stop();
+            timerSpectrum.Enabled = false;
+            timerSpectrum.Stop();
         }
 
         private void btnPrev_Click(object sender, EventArgs e)
@@ -469,6 +584,12 @@ namespace Mp3_Player_with_BASS
             ds.Clear();
         }
         #endregion
+
+        private void timerSpectrum_Tick(object sender, EventArgs e)
+        {
+            DrawSpectrum();
+            textBox1.Text = "dziala";
+        }
 
         
 
