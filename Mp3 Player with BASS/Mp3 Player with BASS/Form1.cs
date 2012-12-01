@@ -23,7 +23,7 @@ namespace Mp3_Player_with_BASS
         private int playState, songLenght,selectedSong,songNumber;
         private bool looping, shuffling;
      
-        SqlConnection sqlConn;
+     
         private DataSet ds=new DataSet();
         private string request = "";
         private DatabaseManager db;
@@ -184,9 +184,12 @@ namespace Mp3_Player_with_BASS
                     player.LoadSong(dataGridView1.Rows[selectedSong].Cells["FileName"].Value.ToString());
                     trackBar1.Value = 0;
                     trackBar1.Maximum = int.Parse(dataGridView1.Rows[selectedSong].Cells["Duration"].Value.ToString());
+                    updateEqualizer();
+                    
                     player.PlaySong();
                     player.Playing = true;
                     timer1.Enabled = true;
+                    
                     
                 }
 
@@ -290,6 +293,7 @@ namespace Mp3_Player_with_BASS
                 player.LoadSong(dataGridView1.Rows[i].Cells["FileName"].Value.ToString());
                 trackBar1.Value = 0;
                 trackBar1.Maximum = int.Parse(dataGridView1.Rows[i].Cells["Duration"].Value.ToString());
+                updateEqualizer();
                 player.PlaySong();
                 player.Playing = true;
                 timer1.Enabled = true;
@@ -309,6 +313,7 @@ namespace Mp3_Player_with_BASS
                 trackBar1.Maximum = int.Parse(dataGridView1.Rows[selectedSong+1].Cells["Duration"].Value.ToString());
                 timer1.Enabled=true;
                 timerSpectrum.Enabled = true;
+                updateEqualizer();
                 player.PlaySong();
               
                 player.Playing = true;
@@ -324,6 +329,7 @@ namespace Mp3_Player_with_BASS
                 player.LoadSong(dataGridView1.Rows[selectedSong - 1].Cells["FileName"].Value.ToString());
                 trackBar1.Value = 0;
                 trackBar1.Maximum = int.Parse(dataGridView1.Rows[selectedSong-1].Cells["Duration"].Value.ToString());
+                updateEqualizer();
                 player.PlaySong();
                 timer1.Enabled=true;
                 timerSpectrum.Enabled = true;
@@ -339,6 +345,7 @@ namespace Mp3_Player_with_BASS
                 player.LoadSong(dataGridView1.Rows[0].Cells["FileName"].Value.ToString());
                 trackBar1.Value = 0;
                 trackBar1.Maximum = int.Parse(dataGridView1.Rows[0].Cells["Duration"].Value.ToString());
+                updateEqualizer();
                 player.PlaySong();
                 selectedSong = 0;
                 dataGridView1.Rows[0].Selected = true;
@@ -351,6 +358,7 @@ namespace Mp3_Player_with_BASS
                 player.LoadSong(dataGridView1.Rows[dataGridView1.Rows.Count - 1].Cells["FileName"].Value.ToString());
                 trackBar1.Value = 0;
                 trackBar1.Maximum = int.Parse(dataGridView1.Rows[dataGridView1.Rows.Count-1].Cells["Duration"].Value.ToString());
+                updateEqualizer();
                 player.PlaySong();
                 selectedSong = dataGridView1.Rows.Count - 1;
                 dataGridView1.Rows[selectedSong].Selected = true;
@@ -391,6 +399,24 @@ namespace Mp3_Player_with_BASS
             }
 
         }
+        private void updateEqualizer()
+        {
+            foreach (Control t in Controls)
+            {
+                if (t is GroupBox && t.Tag != null)
+                {
+                    foreach (Control tr in t.Controls)
+                    {
+                        if (tr is TrackBar && tr.Tag.ToString() != "echochorus")
+                        {
+                            int index = int.Parse(((TrackBar)tr).Tag.ToString());
+                            player.UpdateEQ(index, ((TrackBar)tr).Value / 10f);
+                        }
+                    }
+                }
+            }
+        }
+
         private string getFileFromServer(string file)
         {
 
@@ -505,7 +531,10 @@ namespace Mp3_Player_with_BASS
                     player.StopSong();
                     player.LoadSong(dataGridView1.Rows[selectedSong].Cells["FileName"].Value.ToString());
                     trackBar1.Value = 0;
+                    
+
                     trackBar1.Maximum = int.Parse(dataGridView1.Rows[selectedSong].Cells["Duration"].Value.ToString());
+                    updateEqualizer();
                     player.PlaySong();
                     player.Playing = true;
                 }
@@ -521,6 +550,7 @@ namespace Mp3_Player_with_BASS
         {
             if (player.Paused)
             {
+                updateEqualizer();
                 player.PlaySong();
                 player.Playing = true;
                 player.Paused = false;
@@ -590,6 +620,68 @@ namespace Mp3_Player_with_BASS
             DrawSpectrum();
             textBox1.Text = "dziala";
         }
+
+        private void trackBar50EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(0, trackBar50EQ.Value / 10f);
+        }
+
+        private void trackBar100EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(1, trackBar100EQ.Value / 10f);
+        }
+
+        private void trackBar200EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(2, trackBar200EQ.Value / 10f);
+        }
+
+        private void trackBar400EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(3, trackBar400EQ.Value / 10f);
+        }
+
+        private void trackBar700EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(4, trackBar700EQ.Value / 10f);
+        }
+
+        private void trackBar1EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(5, trackBar1EQ.Value / 10f);
+        }
+
+        private void trackBar2EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(6, trackBar2EQ.Value / 10f);
+        }
+
+        private void trackBar4EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(7, trackBar4EQ.Value / 10f);
+        }
+
+        private void trackBar6EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(8, trackBar6EQ.Value / 10f);
+        }
+
+        private void trackBar8EQ_ValueChanged(object sender, EventArgs e)
+        {
+            player.UpdateEQ(9, trackBar8EQ.Value / 10f);
+        }
+
+        private void trackBarEcho_ValueChanged(object sender, EventArgs e)
+        {
+            player.SetEchoAndChorus(trackBarEcho.Value);
+        }
+
+        private void trackBarChorus_ValueChanged(object sender, EventArgs e)
+        {
+            player.SetEchoAndChorus(trackBarChorus.Value);
+        }
+
+    
 
         
 

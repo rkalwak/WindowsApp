@@ -9,13 +9,20 @@ namespace Mp3_Player_with_BASS
     class Player
     {
         int stream;
-        bool playing, paused;
+        bool playing, paused,fxChanged;
+        private int _fxChorusHandle = 0;
+        private BASS_DX8_CHORUS _chorus = new BASS_DX8_CHORUS(0f, 25f, 90f, 5f, 1, 0f, BASSFXPhase.BASS_FX_PHASE_NEG_90);
+        private int _fxEchoHandle = 0;
+        private BASS_DX8_ECHO _echo = new BASS_DX8_ECHO(90f, 50f, 500f, 500f, false);
+        private int[] _fxEQ = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        private int[] _fxEQcopy = null;
         public Player()
         {
             Bass.BASS_Init(-1, 44100, BASSInit.BASS_DEVICE_DEFAULT, System.IntPtr.Zero);
             
             playing = false;
             paused = false;
+            fxChanged = false;
         }
         #region accessors
         public bool Playing
@@ -38,17 +45,102 @@ namespace Mp3_Player_with_BASS
         public void LoadSong(string location)
         {
             stream = Bass.BASS_StreamCreateFile(location, 0, 0, BASSFlag.BASS_SAMPLE_FLOAT);
+            SetFXParameters();
+        }
+        private void SetFXParameters()
+        {
+            _fxChorusHandle = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_CHORUS, 1);
+            _chorus.fWetDryMix = 0f;
+            //trackBarChorus.Value = 0;
+            Bass.BASS_FXSetParameters(_fxChorusHandle, _chorus);
+
+            _fxEchoHandle = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_ECHO, 2);
+            _echo.fWetDryMix = 0f;
+            //trackBarEcho.Value = 0;
+            Bass.BASS_FXSetParameters(_fxEchoHandle, _echo);
+            // tu gdzies jest blad :P 
+            // 3-band EQ
+            BASS_DX8_PARAMEQ eq = new BASS_DX8_PARAMEQ();
+            _fxEQ[0] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[1] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[2] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[3] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[4] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[5] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[6] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[7] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[8] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            _fxEQ[9] = Bass.BASS_ChannelSetFX(stream, BASSFXType.BASS_FX_DX8_PARAMEQ, 0);
+            
+            eq.fBandwidth = 18f;
+
+            eq.fCenter = 50f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[0], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 100f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[1], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 200f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[2], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 400f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[3], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 700f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[4], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 1000f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[5], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 2000f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[6], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 4000f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[7], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 6000f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[8], eq);
+            eq.fBandwidth = 18f;
+            eq.fCenter = 8000f;
+            eq.fGain = 0 / 10f;
+            Bass.BASS_FXSetParameters(_fxEQ[9], eq);
+            fxChanged = true;
             
         }
-
+        public void SetEchoAndChorus(float value)
+        {
+            _echo.fWetDryMix = value;
+            Bass.BASS_FXSetParameters(_fxEchoHandle, _echo);
+            fxChanged = true;
+        }
         public void PlaySong()
         {
+
+  
             
-            Bass.BASS_ChannelPlay(stream,false);
+            
+            Bass.BASS_ChannelPlay(stream, false);
             SetVolume(0);
             SetVolume(100);
         }
-
+        public void UpdateEQ(int band, float gain)
+        {
+            BASS_DX8_PARAMEQ eq = new BASS_DX8_PARAMEQ();
+            if (Bass.BASS_FXGetParameters(_fxEQ[band], eq))
+            {
+                eq.fGain = gain;
+                Bass.BASS_FXSetParameters(_fxEQ[band], eq);
+            }
+        }
         public void StopSong()
         {
             Bass.BASS_ChannelStop(stream);
